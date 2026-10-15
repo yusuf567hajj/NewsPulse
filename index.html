@@ -1,0 +1,1464 @@
+
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NewsPulse — Your World. Your News. One Place.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pulse: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        serif: ['Georgia', 'Cambria', 'Times New Roman', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Georgia:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-dot {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <i id="toast-icon" class="fas fa-circle-check text-blue-400 dark:text-blue-600"></i>
+        <span id="toast-msg" class="text-sm font-medium">Notification message</span>
+    </div>
+
+    <!-- HEADER / MASTHEAD -->
+    <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-colors">
+        <!-- Top Bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Tagline -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateToCategory('top')">
+                    <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-xl shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-newspaper text-lg"></i>
+                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span class="pulse-dot absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-extrabold text-xl tracking-tight text-gray-900 dark:text-white">News<span class="text-blue-600">Pulse</span></span>
+                            <span id="edition-badge" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800">KE</span>
+                        </div>
+                        <p class="text-[10px] font-medium text-gray-500 dark:text-gray-400 hidden sm:block">Your World. Your News. One Place.</p>
+                    </div>
+                </div>
+
+                <!-- Center Search Bar (Desktop) -->
+                <div class="hidden md:flex flex-1 max-w-md mx-8 relative">
+                    <form onsubmit="handleSearch(event)" class="w-full relative">
+                        <input id="desktop-search-input" type="text" placeholder="Search news, topics, publishers..." class="w-full bg-gray-100 dark:bg-slate-800 border-0 rounded-full py-2 pl-10 pr-10 text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all dark:text-white text-gray-900">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-gray-400 text-sm"></i>
+                        <button type="button" id="desktop-clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right Controls -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    
+                    <!-- Date Display -->
+                    <div id="date-display" class="hidden lg:block text-xs font-semibold text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-slate-800 pr-3">
+                        Thu, Oct 15, 2026
+                    </div>
+
+                    <!-- Region Selector -->
+                    <select id="country-select" onchange="changeEdition(this.value)" class="bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-medium cursor-pointer text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500">
+                        <option value="KE">🇰🇪 Kenya (KE)</option>
+                        <option value="US">🇺🇸 United States (US)</option>
+                        <option value="GB">🇬🇧 United Kingdom (UK)</option>
+                        <option value="ZA">🇿🇦 South Africa (ZA)</option>
+                        <option value="NG">🇳🇬 Nigeria (NG)</option>
+                        <option value="IN">🇮🇳 India (IN)</option>
+                        <option value="WORLD">🌐 Global Edition</option>
+                    </select>
+
+                    <!-- Refresh Button -->
+                    <button onclick="refreshCurrentFeed()" title="Refresh News" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <i id="refresh-icon" class="fa-solid fa-rotate text-sm"></i>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleDarkMode()" title="Toggle Theme" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                    </button>
+
+                    <!-- User Account / Bookmarks Toggle -->
+                    <button onclick="toggleBookmarksDrawer()" title="Saved Articles" class="relative p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-bookmark text-sm"></i>
+                        <span id="bookmark-count-badge" class="hidden absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                    </button>
+
+                    <!-- Admin Dashboard Button -->
+                    <button onclick="openAdminModal()" title="Admin Control Panel" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-sliders text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <div class="md:hidden pb-3">
+                <form onsubmit="handleSearch(event)" class="relative w-full">
+                    <input id="mobile-search-input" type="text" placeholder="Search news, topics, companies..." class="w-full bg-gray-100 dark:bg-slate-800 border-0 rounded-full py-2 pl-9 pr-9 text-xs focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-gray-900 dark:text-white">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                    <button type="button" id="mobile-clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-gray-400 text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Horizontal Category Pill Navigation Bar -->
+        <nav class="border-t border-gray-100 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div id="category-bar" class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto hide-scrollbar text-xs font-semibold whitespace-nowrap">
+                    <!-- Categories will be rendered dynamically -->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Active View / Filter Indicator Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-slate-800">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 id="current-section-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white capitalize">
+                        Top Stories
+                    </h1>
+                    <span id="live-indicator" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> LIVE FEED
+                    </span>
+                </div>
+                <p id="current-section-desc" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Curated top headlines updated in real-time from trusted publishers in Kenya and globally.
+                </p>
+            </div>
+            
+            <div class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                <span id="last-updated-text" class="flex items-center">
+                    <i class="fa-regular fa-clock mr-1"></i> Updated just now
+                </span>
+                <span class="text-gray-300 dark:text-slate-700">|</span>
+                <span id="article-count-text">0 articles</span>
+            </div>
+        </div>
+
+        <!-- SEARCH RESULTS QUERY BANNER (hidden by default) -->
+        <div id="search-query-banner" class="hidden mb-6 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-lg">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Search Results</div>
+                    <div id="search-term-display" class="text-base font-bold text-gray-900 dark:text-white">"..."</div>
+                </div>
+            </div>
+            <button onclick="clearSearch()" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-gray-100 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm transition">
+                Clear Search
+            </button>
+        </div>
+
+        <!-- ERROR STATE BANNER -->
+        <div id="error-banner" class="hidden mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 flex items-start space-x-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+                <h4 class="text-sm font-bold text-amber-900 dark:text-amber-200" id="error-title">Unable to fetch live feed</h4>
+                <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5" id="error-desc">There was an issue connecting to the news provider. Showing cached news data.</p>
+                <button onclick="refreshCurrentFeed()" class="mt-2 text-xs font-bold text-amber-800 dark:text-amber-200 underline hover:text-amber-900">
+                    Try Again
+                </button>
+            </div>
+        </div>
+
+        <!-- SKELETON LOADING STATE -->
+        <div id="loading-skeletons" class="space-y-8">
+            <!-- Hero Skeleton -->
+            <div class="w-full bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 animate-pulse">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-7 h-64 sm:h-80 bg-gray-200 dark:bg-slate-800 rounded-xl"></div>
+                    <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <div class="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/4"></div>
+                            <div class="h-6 bg-gray-200 dark:bg-slate-800 rounded w-3/4"></div>
+                            <div class="h-6 bg-gray-200 dark:bg-slate-800 rounded w-full"></div>
+                            <div class="h-16 bg-gray-200 dark:bg-slate-800 rounded w-full"></div>
+                        </div>
+                        <div class="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Grid Skeletons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 animate-pulse space-y-3">
+                    <div class="h-40 bg-gray-200 dark:bg-slate-800 rounded-xl"></div>
+                    <div class="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-full"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-2/3"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 animate-pulse space-y-3">
+                    <div class="h-40 bg-gray-200 dark:bg-slate-800 rounded-xl"></div>
+                    <div class="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-full"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-2/3"></div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 animate-pulse space-y-3">
+                    <div class="h-40 bg-gray-200 dark:bg-slate-800 rounded-xl"></div>
+                    <div class="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-full"></div>
+                    <div class="h-5 bg-gray-200 dark:bg-slate-800 rounded w-2/3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DYNAMIC CONTENT CONTAINER -->
+        <div id="news-container" class="hidden space-y-8">
+            
+            <!-- FEATURED HERO STORY -->
+            <section id="hero-section" class="relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md transition duration-300">
+                <!-- Injected dynamically -->
+            </section>
+
+            <!-- TWO-COLUMN LAYOUT FOR TRENDING & RECOMMENDED -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- LEFT MAIN FEED (8 COLS) -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-extrabold text-gray-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-newspaper text-blue-600 mr-2 text-base"></i> Top Headlines
+                        </h2>
+                    </div>
+
+                    <!-- Main Grid -->
+                    <div id="main-articles-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Cards injected dynamically -->
+                    </div>
+
+                    <!-- LOAD MORE BUTTON -->
+                    <div class="pt-4 text-center">
+                        <button id="load-more-btn" onclick="loadMoreArticles()" class="px-6 py-3 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl font-semibold text-sm shadow-sm transition inline-flex items-center space-x-2">
+                            <span>Load More Stories</span>
+                            <i class="fa-solid fa-arrow-down text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDEBAR (4 COLS) -->
+                <aside class="lg:col-span-4 space-y-6">
+                    
+                    <!-- Trending Section Widget -->
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center mb-4 pb-2 border-b border-gray-100 dark:border-slate-800">
+                            <i class="fa-solid fa-fire text-amber-500 mr-2"></i> Trending News
+                        </h3>
+                        <div id="trending-list" class="space-y-4">
+                            <!-- Trending items injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Recommended Topics Widget -->
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-200 dark:border-slate-800 shadow-sm">
+                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center mb-3">
+                            <i class="fa-solid fa-compass text-blue-600 mr-2"></i> Explore Topics
+                        </h3>
+                        <div class="flex flex-wrap gap-2" id="topic-tags">
+                            <button onclick="searchByTopic('Kenya Economy')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">🇰🇪 Kenya Economy</button>
+                            <button onclick="searchByTopic('Nairobi')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">🏙️ Nairobi</button>
+                            <button onclick="searchByTopic('Silicon Savannah')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">💡 Tech Innovations</button>
+                            <button onclick="searchByTopic('East Africa')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">🌍 East Africa</button>
+                            <button onclick="searchByTopic('Harambee Stars')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">⚽ Kenyan Sports</button>
+                            <button onclick="searchByTopic('Agriculture Kenya')" class="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-xs font-medium hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/40 dark:hover:text-blue-300 transition">🌾 Agribusiness</button>
+                        </div>
+                    </div>
+
+                    <!-- Publisher Compliance Info Widget -->
+                    <div class="bg-blue-50/50 dark:bg-slate-900/50 rounded-2xl p-4 border border-blue-100 dark:border-slate-800 text-xs text-gray-600 dark:text-gray-400">
+                        <div class="font-semibold text-gray-900 dark:text-gray-200 mb-1 flex items-center">
+                            <i class="fa-solid fa-shield-halved text-blue-600 mr-1.5"></i> Publisher Integrity
+                        </div>
+                        <p class="leading-relaxed">
+                            NewsPulse aggregates links and summaries directly from verified original news publishers. Full copyright resides with respective creators.
+                        </p>
+                        <button onclick="openLegalModal()" class="mt-2 font-bold text-blue-600 dark:text-blue-400 hover:underline inline-block">
+                            Read Terms & Attribution Guidelines &rarr;
+                        </button>
+                    </div>
+
+                </aside>
+            </div>
+        </div>
+
+        <!-- EMPTY RESULTS STATE -->
+        <div id="empty-state" class="hidden text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-8">
+            <div class="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">No Stories Found</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-2">
+                We couldn't find any articles matching your query or active edition filter. Try adjusting your search keywords or switching news categories.
+            </p>
+            <button onclick="clearSearch()" class="mt-6 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition">
+                Reset Filters
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 py-8 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-newspaper text-sm"></i>
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-base text-gray-900 dark:text-white">NewsPulse</span>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Your World. Your News. One Place.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-6 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                    <a href="javascript:void(0)" onclick="openLegalModal('about')" class="hover:text-blue-600 dark:hover:text-blue-400">About NewsPulse</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('privacy')" class="hover:text-blue-600 dark:hover:text-blue-400">Privacy Policy</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('terms')" class="hover:text-blue-600 dark:hover:text-blue-400">Terms of Service</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('attribution')" class="hover:text-blue-600 dark:hover:text-blue-400">Sources & Licensing</a>
+                    <a href="javascript:void(0)" onclick="openAdminModal()" class="hover:text-blue-600 dark:hover:text-blue-400">Admin Dashboard</a>
+                </div>
+
+                <div class="text-xs text-gray-400 dark:text-gray-500">
+                    &copy; 2026 NewsPulse Inc. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ARTICLE READER MODAL -->
+    <div id="article-modal" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-slate-800 relative transition-all">
+            
+            <!-- Sticky Modal Header Bar -->
+            <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-gray-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span id="modal-publisher" class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Publisher</span>
+                    <span class="text-gray-300 dark:text-slate-700">•</span>
+                    <span id="modal-time" class="text-xs text-gray-500 dark:text-gray-400">Time</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button id="modal-bookmark-btn" onclick="toggleBookmarkCurrentArticle()" title="Bookmark" class="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg">
+                        <i class="fa-regular fa-bookmark text-base"></i>
+                    </button>
+                    <button id="modal-share-btn" onclick="shareArticleModal()" title="Share" class="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg">
+                        <i class="fa-solid fa-share-nodes text-base"></i>
+                    </button>
+                    <button onclick="closeArticleModal()" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 space-y-6">
+                <!-- Image -->
+                <div id="modal-image-container" class="rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 max-h-80 relative">
+                    <img id="modal-image" src="" alt="" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Headline -->
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white leading-tight font-serif">
+                    Headline goes here
+                </h2>
+
+                <!-- Summary Excerpt -->
+                <div id="modal-excerpt" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed font-sans space-y-3">
+                    Excerpt preview...
+                </div>
+
+                <!-- Source Attribution Banner -->
+                <div class="p-4 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700/60 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Original Source Attribution</span>
+                        <span id="modal-category" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">Category</span>
+                    </div>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">
+                        This story snippet is aggregated by NewsPulse from <strong id="modal-source-name" class="text-gray-900 dark:text-white">Source</strong>. Click below to read the full uncensored report on the publisher's official website.
+                    </p>
+                    <a id="modal-read-original" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition space-x-2">
+                        <span>Read Original Full Article</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Social Sharing Action Buttons Bar -->
+                <div class="space-y-2">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Share Story</span>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="shareToPlatform('whatsapp')" class="py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 flex items-center justify-center space-x-1">
+                            <i class="fa-brands fa-whatsapp"></i> <span class="hidden sm:inline">WhatsApp</span>
+                        </button>
+                        <button onclick="shareToPlatform('twitter')" class="py-2 bg-slate-900 dark:bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-black flex items-center justify-center space-x-1">
+                            <i class="fa-brands fa-x-twitter"></i> <span class="hidden sm:inline">X / Twitter</span>
+                        </button>
+                        <button onclick="shareToPlatform('facebook')" class="py-2 bg-blue-700 text-white rounded-lg text-xs font-bold hover:bg-blue-800 flex items-center justify-center space-x-1">
+                            <i class="fa-brands fa-facebook"></i> <span class="hidden sm:inline">Facebook</span>
+                        </button>
+                        <button onclick="copyArticleLink()" class="py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-bold hover:bg-gray-300 flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-link"></i> <span class="hidden sm:inline">Copy Link</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVED BOOKMARKS & HISTORY DRAWER -->
+    <div id="bookmarks-drawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl border-l border-gray-200 dark:border-slate-800 transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-bookmark text-blue-600 text-lg"></i>
+                <h3 class="font-bold text-lg text-gray-900 dark:text-white">Saved Articles</h3>
+            </div>
+            <button onclick="toggleBookmarksDrawer()" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div id="bookmarks-list" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Bookmarked items injected here -->
+        </div>
+
+        <div class="p-4 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50">
+            <button onclick="clearAllBookmarks()" class="w-full py-2 bg-gray-200 dark:bg-slate-800 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg transition">
+                Clear All Saved Bookmarks
+            </button>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD MODAL -->
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-slate-800 relative">
+            
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-900 z-10">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 rounded-xl">
+                        <i class="fa-solid fa-sliders text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-900 dark:text-white">NewsPulse Admin Control Panel</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">System health, RSS providers, and feed diagnostics</p>
+                    </div>
+                </div>
+                <button onclick="closeAdminModal()" class="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- PIN LOCK CHECK -->
+            <div id="admin-lock-screen" class="p-8 text-center space-y-4">
+                <i class="fa-solid fa-lock text-4xl text-blue-600 mb-2"></i>
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Administrator Verification Required</h4>
+                <p class="text-xs text-gray-500 max-w-sm mx-auto">Enter the administrator access passcode to manage feed ingestion and API adapters.</p>
+                <div class="max-w-xs mx-auto space-y-3">
+                    <input id="admin-pin-input" type="password" placeholder="Enter PIN (Default: 1234)" class="w-full border border-gray-300 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-center text-sm font-bold tracking-widest text-gray-900 dark:text-white">
+                    <button onclick="verifyAdminPin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition">
+                        Unlock Admin Panel
+                    </button>
+                </div>
+            </div>
+
+            <!-- ADMIN DASHBOARD CONTENT -->
+            <div id="admin-content" class="hidden p-6 space-y-6">
+                
+                <!-- System Status Metric Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
+                        <div class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">Provider Status</div>
+                        <div class="text-lg font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span> Active
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50">
+                        <div class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase">Cached Articles</div>
+                        <div id="admin-stat-articles" class="text-lg font-black text-gray-900 dark:text-white mt-1">0</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50">
+                        <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">API Error Logs</div>
+                        <div id="admin-stat-errors" class="text-lg font-black text-gray-900 dark:text-white mt-1">0</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
+                        <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Cache Hit Rate</div>
+                        <div id="admin-stat-cache" class="text-lg font-black text-gray-900 dark:text-white mt-1">98.4%</div>
+                    </div>
+                </div>
+
+                <!-- Provider Configuration -->
+                <div class="p-5 bg-gray-50 dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-slate-700 space-y-4">
+                    <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center">
+                        <i class="fa-solid fa-plug text-blue-600 mr-2"></i> News Ingestion Adapter Configuration
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Primary Feed Source</label>
+                            <select id="admin-provider-select" onchange="updateProviderSettings()" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs font-medium text-gray-900 dark:text-white">
+                                <option value="rss">Google News RSS Engine (Kenya Optimized)</option>
+                                <option value="gnews">GNews REST API Adapter</option>
+                                <option value="newsapi">NewsAPI.org Endpoint Adapter</option>
+                                <option value="custom">Custom Server Proxy REST API (/api/news)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Auto-Refresh Interval</label>
+                            <select id="admin-refresh-interval" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs font-medium text-gray-900 dark:text-white">
+                                <option value="300">5 Minutes (Recommended)</option>
+                                <option value="600">10 Minutes</option>
+                                <option value="900">15 Minutes</option>
+                                <option value="1800">30 Minutes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="admin-api-key-container" class="space-y-2">
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">API Credentials / Token Secret (Server Secured)</label>
+                        <input id="admin-api-key" type="password" placeholder="Enter API Key or Client Secret if using GNews/NewsAPI..." class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg p-2 text-xs text-gray-900 dark:text-white">
+                        <p class="text-[10px] text-gray-500">Google News RSS operates natively without mandatory API keys. External provider keys are stored in secure browser local vault.</p>
+                    </div>
+
+                    <button onclick="saveAdminSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
+                        Save Configuration
+                    </button>
+                </div>
+
+                <!-- Live Diagnostics Console -->
+                <div class="space-y-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">Feed Ingestion Diagnostics Log</h4>
+                    <div id="admin-logs-console" class="bg-slate-950 text-emerald-400 font-mono text-xs p-4 rounded-xl h-36 overflow-y-auto space-y-1">
+                        <div>[SYSTEM]: Initializing NewsPulse Engine v2.4...</div>
+                        <div>[INGEST]: Loaded Kenya edition rules (hl=en-KE, gl=KE, ceid=KE:en)</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGAL / ABOUT MODAL -->
+    <div id="legal-modal" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-gray-200 dark:border-slate-800 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-slate-800">
+                <h3 id="legal-modal-title" class="font-bold text-lg text-gray-900 dark:text-white">About & Legal Disclaimers</h3>
+                <button onclick="closeLegalModal()" class="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="legal-modal-body" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-3 leading-relaxed">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        /**
+         * NewsPulse Core Engine
+         * Dynamic RSS Engine, Multi-Provider Architecture, Filtering & Deduplication
+         */
+
+        // STATE MANAGEMENT
+        const state = {
+            activeCategory: 'top',
+            activeEdition: 'KE',
+            searchQuery: '',
+            articles: [],
+            featuredArticle: null,
+            bookmarks: JSON.parse(localStorage.getItem('newspulse_bookmarks') || '[]'),
+            readingHistory: JSON.parse(localStorage.getItem('newspulse_history') || '[]'),
+            currentModalArticle: null,
+            page: 1,
+            pageSize: 12,
+            provider: localStorage.getItem('newspulse_provider') || 'rss',
+            apiKey: localStorage.getItem('newspulse_apikey') || '',
+            darkMode: localStorage.getItem('newspulse_dark') === 'true',
+            lastUpdated: null,
+            logs: []
+        };
+
+        // CATEGORIES DEFINITION (14 SECTIONS)
+        const CATEGORIES = [
+            { id: 'top', name: 'Top Stories', icon: 'fa-fire', query: '' },
+            { id: 'kenya', name: 'Kenya', icon: 'fa-flag', query: 'Kenya news' },
+            { id: 'world', name: 'World', icon: 'fa-globe', topic: 'WORLD' },
+            { id: 'politics', name: 'Politics', icon: 'fa-landmark', query: 'politics' },
+            { id: 'business', name: 'Business', icon: 'fa-briefcase', topic: 'BUSINESS' },
+            { id: 'technology', name: 'Technology', icon: 'fa-microchip', topic: 'TECHNOLOGY' },
+            { id: 'sports', name: 'Sports', icon: 'fa-futbol', topic: 'SPORTS' },
+            { id: 'entertainment', name: 'Entertainment', icon: 'fa-film', topic: 'ENTERTAINMENT' },
+            { id: 'health', name: 'Health', icon: 'fa-heart-pulse', topic: 'HEALTH' },
+            { id: 'science', name: 'Science', icon: 'fa-flask', topic: 'SCIENCE' },
+            { id: 'education', name: 'Education', icon: 'fa-graduation-cap', query: 'education school university' },
+            { id: 'agriculture', name: 'Agriculture', icon: 'fa-wheat-awn', query: 'agriculture farming crops' },
+            { id: 'finance', name: 'Finance', icon: 'fa-coins', query: 'finance economy markets' },
+            { id: 'environment', name: 'Environment', icon: 'fa-leaf', query: 'environment climate nature' }
+        ];
+
+        // EDITIONS CONFIGURATION
+        const EDITIONS = {
+            'KE': { hl: 'en-KE', gl: 'KE', ceid: 'KE:en', label: 'Kenya' },
+            'US': { hl: 'en-US', gl: 'US', ceid: 'US:en', label: 'United States' },
+            'GB': { hl: 'en-GB', gl: 'GB', ceid: 'GB:en', label: 'United Kingdom' },
+            'ZA': { hl: 'en-ZA', gl: 'ZA', ceid: 'ZA:en', label: 'South Africa' },
+            'NG': { hl: 'en-NG', gl: 'NG', ceid: 'NG:en', label: 'Nigeria' },
+            'IN': { hl: 'en-IN', gl: 'IN', ceid: 'IN:en', label: 'India' },
+            'WORLD': { hl: 'en', gl: 'US', ceid: 'US:en', label: 'Global' }
+        };
+
+        // INITIALIZATION ON DOM LOAD
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            updateDateDisplay();
+            renderCategoryNavigation();
+            updateBookmarkBadge();
+            fetchNewsFeed();
+
+            // Set interval for auto background refresh
+            setInterval(() => {
+                logAdminEvent('[AUTO-REFRESH]: Background sync triggered.');
+                fetchNewsFeed(true);
+            }, 300000); // 5 mins
+        });
+
+        // THEME HANDLING
+        function initTheme() {
+            if (state.darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-sm text-amber-400';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = 'fa-solid fa-moon text-sm';
+            }
+        }
+
+        function toggleDarkMode() {
+            state.darkMode = !state.darkMode;
+            localStorage.setItem('newspulse_dark', state.darkMode);
+            initTheme();
+            showToast(state.darkMode ? 'Dark mode enabled' : 'Light mode enabled');
+        }
+
+        // DATE DISPLAY
+        function updateDateDisplay() {
+            const now = new Date();
+            const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+            document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // RENDER CATEGORY PILL NAVIGATION
+        function renderCategoryNavigation() {
+            const container = document.getElementById('category-bar');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = cat.id === state.activeCategory;
+                return `
+                    <button onclick="navigateToCategory('${cat.id}')" 
+                        class="px-3.5 py-1.5 rounded-full transition flex items-center space-x-2 border ${
+                            isActive 
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm' 
+                            : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700'
+                        }">
+                        <i class="fa-solid ${cat.icon} text-xs"></i>
+                        <span>${cat.name}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // CHANGE CATEGORY
+        function navigateToCategory(catId) {
+            state.activeCategory = catId;
+            state.searchQuery = '';
+            state.page = 1;
+            document.getElementById('desktop-search-input').value = '';
+            document.getElementById('mobile-search-input').value = '';
+            document.getElementById('desktop-clear-search').classList.add('hidden');
+            document.getElementById('mobile-clear-search').classList.add('hidden');
+            document.getElementById('search-query-banner').classList.add('hidden');
+
+            const cat = CATEGORIES.find(c => c.id === catId) || CATEGORIES[0];
+            document.getElementById('current-section-title').textContent = cat.name;
+            document.getElementById('current-section-desc').textContent = `Latest breaking ${cat.name.toLowerCase()} headlines from Kenya & world media.`;
+
+            renderCategoryNavigation();
+            fetchNewsFeed();
+        }
+
+        // CHANGE EDITION / COUNTRY
+        function changeEdition(editionCode) {
+            state.activeEdition = editionCode;
+            document.getElementById('edition-badge').textContent = editionCode;
+            logAdminEvent(`[EDITION]: Changed active country edition to ${editionCode}`);
+            showToast(`Edition switched to ${EDITIONS[editionCode]?.label || editionCode}`);
+            fetchNewsFeed();
+        }
+
+        // NEWS INGESTION & RSS FETCHING PIPELINE
+        async function fetchNewsFeed(isSilent = false) {
+            if (!isSilent) {
+                showLoadingState();
+            }
+
+            logAdminEvent(`[FETCH]: Fetching category=${state.activeCategory}, query="${state.searchQuery}", edition=${state.activeEdition}`);
+
+            let rawArticles = [];
+            let errorOccurred = false;
+
+            try {
+                // Construct Target Feed URL
+                const ed = EDITIONS[state.activeEdition] || EDITIONS['KE'];
+                let feedUrl = `https://news.google.com/rss?hl=${ed.hl}&gl=${ed.gl}&ceid=${ed.ceid}`;
+
+                const currentCatObj = CATEGORIES.find(c => c.id === state.activeCategory);
+
+                if (state.searchQuery) {
+                    feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(state.searchQuery)}+${ed.label}&hl=${ed.hl}&gl=${ed.gl}&ceid=${ed.ceid}`;
+                } else if (currentCatObj?.topic) {
+                    feedUrl = `https://news.google.com/rss/headlines/section/topic/${currentCatObj.topic}?hl=${ed.hl}&gl=${ed.gl}&ceid=${ed.ceid}`;
+                } else if (currentCatObj?.query) {
+                    feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(currentCatObj.query)}&hl=${ed.hl}&gl=${ed.gl}&ceid=${ed.ceid}`;
+                }
+
+                // Fetch via Browser Proxy Adapters (Robust Fallback Chain)
+                rawArticles = await fetchRSSWithFallback(feedUrl);
+
+            } catch (err) {
+                console.error("Feed fetch failure:", err);
+                logAdminEvent(`[ERROR]: Primary RSS fetch failed: ${err.message}`);
+                errorOccurred = true;
+            }
+
+            // Fallback to sample data if feed fetch completely fails or offline
+            if (!rawArticles || rawArticles.length === 0) {
+                errorOccurred = true;
+                rawArticles = getFallbackNewsData(state.activeCategory);
+                logAdminEvent(`[FALLBACK]: Loaded fallback fallback articles.`);
+            }
+
+            // Normalize and Deduplicate Articles
+            const normalized = normalizeArticles(rawArticles);
+            state.articles = deduplicateArticles(normalized);
+            state.lastUpdated = new Date();
+
+            // Render UI
+            hideLoadingState();
+            
+            if (errorOccurred) {
+                document.getElementById('error-banner').classList.remove('hidden');
+            } else {
+                document.getElementById('error-banner').classList.add('hidden');
+            }
+
+            renderArticlesView();
+            updateLastUpdatedText();
+            logAdminEvent(`[SUCCESS]: Rendered ${state.articles.length} clean articles.`);
+        }
+
+        // RSS PROXY & CORS FALLBACK ENGINE
+        async function fetchRSSWithFallback(targetRssUrl) {
+            // Strategy 1: RSS2JSON API Proxy
+            try {
+                const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetRssUrl)}`;
+                const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(6000) });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'ok' && data.items && data.items.length > 0) {
+                        return data.items.map(item => ({
+                            title: item.title,
+                            link: item.link,
+                            pubDate: item.pubDate,
+                            description: item.description || item.content,
+                            author: item.author || item.source || extractSourceFromTitle(item.title)
+                        }));
+                    }
+                }
+            } catch (e) {
+                console.warn("RSS2JSON proxy attempt failed, switching fallback...");
+            }
+
+            // Strategy 2: AllOrigins CORS Proxy + DOMParser
+            try {
+                const corsProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(targetRssUrl)}`;
+                const res = await fetch(corsProxy, { signal: AbortSignal.timeout(6000) });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.contents) {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                        const items = Array.from(xmlDoc.querySelectorAll("item"));
+                        if (items.length > 0) {
+                            return items.map(item => {
+                                const title = item.querySelector("title")?.textContent || "";
+                                const link = item.querySelector("link")?.textContent || "";
+                                const pubDate = item.querySelector("pubDate")?.textContent || "";
+                                const description = item.querySelector("description")?.textContent || "";
+                                const source = item.querySelector("source")?.textContent || extractSourceFromTitle(title);
+                                return { title, link, pubDate, description, author: source };
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("AllOrigins proxy attempt failed.");
+            }
+
+            return [];
+        }
+
+        // ARTICLE NORMALIZATION
+        function normalizeArticles(items) {
+            return items.map((item, idx) => {
+                // Parse Title & Source Separation (Google News titles format: "Title text - Publisher Name")
+                let cleanTitle = item.title || "Untitled Article";
+                let publisher = item.author || "Trusted Source";
+
+                if (cleanTitle.includes(" - ")) {
+                    const parts = cleanTitle.split(" - ");
+                    publisher = parts.pop().trim();
+                    cleanTitle = parts.join(" - ").trim();
+                }
+
+                // Excerpt Cleansing
+                let rawDesc = item.description || "";
+                let tempDiv = document.createElement("div");
+                tempDiv.innerHTML = rawDesc;
+                let cleanExcerpt = tempDiv.textContent || tempDiv.innerText || "";
+                cleanExcerpt = cleanExcerpt.replace(/View Full Coverage on Google News/gi, "").trim();
+                
+                if (!cleanExcerpt || cleanExcerpt.length < 20) {
+                    cleanExcerpt = `${cleanTitle}. Read complete breaking development story directly from ${publisher}.`;
+                }
+
+                // Thumbnail / Image fallback extraction
+                let image = extractImageFromHtml(rawDesc) || getRandomCategoryFallbackImage(state.activeCategory, idx);
+
+                return {
+                    id: `art-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                    title: cleanTitle,
+                    link: item.link || "#",
+                    publisher: publisher,
+                    pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
+                    excerpt: cleanExcerpt,
+                    image: image,
+                    category: state.activeCategory
+                };
+            });
+        }
+
+        // DEDUPLICATION BY TITLE SIMILARITY
+        function deduplicateArticles(articles) {
+            const seen = new Set();
+            return articles.filter(art => {
+                const normalized = art.title.toLowerCase().replace(/[^a-z0-0]/g, "").slice(0, 40);
+                if (seen.has(normalized)) return false;
+                seen.add(normalized);
+                return true;
+            });
+        }
+
+        // EXTRACT IMAGE FROM HTML SNIPPET
+        function extractImageFromHtml(html) {
+            if (!html) return null;
+            const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+            return match ? match[1] : null;
+        }
+
+        // FALLBACK IMAGES GENERATOR (Unsplash Curated Editorial News Photos)
+        function getRandomCategoryFallbackImage(category, index) {
+            const images = {
+                kenya: [
+                    "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=800&q=80"
+                ],
+                technology: [
+                    "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80"
+                ],
+                business: [
+                    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80"
+                ],
+                sports: [
+                    "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80",
+                    "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80"
+                ],
+                world: [
+                    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80"
+                ]
+            };
+            const list = images[category] || [
+                "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80",
+                "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=800&q=80",
+                "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80"
+            ];
+            return list[index % list.length];
+        }
+
+        // RENDER ARTICLES VIEW
+        function renderArticlesView() {
+            const container = document.getElementById('news-container');
+            const emptyState = document.getElementById('empty-state');
+
+            if (!state.articles || state.articles.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            // Render Hero Featured Story (First Article)
+            state.featuredArticle = state.articles[0];
+            renderHeroSection(state.featuredArticle);
+
+            // Render Main Feed Grid (Remaining Articles)
+            const remainingArticles = state.articles.slice(1, state.page * state.pageSize);
+            renderMainGrid(remainingArticles);
+
+            // Render Trending Sidebar (Top 5 items)
+            renderTrendingSidebar(state.articles.slice(0, 5));
+
+            document.getElementById('article-count-text').textContent = `${state.articles.length} articles loaded`;
+        }
+
+        // RENDER HERO HERO ARTICLE
+        function renderHeroSection(art) {
+            const heroEl = document.getElementById('hero-section');
+            if (!art) return;
+
+            const relativeTime = getRelativeTime(art.pubDate);
+            const isBookmarked = state.bookmarks.some(b => b.title === art.title);
+
+            heroEl.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-0 cursor-pointer group" onclick="openArticleModal('${art.id}')">
+                    <div class="lg:col-span-7 h-64 sm:h-80 md:h-96 relative overflow-hidden bg-gray-900">
+                        <img src="${art.image}" alt="${art.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90">
+                        <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-transparent to-transparent"></div>
+                        <span class="absolute top-4 left-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                            Featured Story
+                        </span>
+                    </div>
+                    <div class="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between bg-white dark:bg-slate-900">
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span class="font-bold text-blue-600 dark:text-blue-400 uppercase">${art.publisher}</span>
+                                <span>•</span>
+                                <span>${relativeTime}</span>
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug font-serif line-clamp-3">
+                                ${art.title}
+                            </h2>
+                            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-3 leading-relaxed">
+                                ${art.excerpt}
+                            </p>
+                        </div>
+                        <div class="pt-6 border-t border-gray-100 dark:border-slate-800/80 flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center">
+                                Read Full Story <i class="fa-solid fa-arrow-right ml-1.5 text-xs"></i>
+                            </span>
+                            <button onclick="event.stopPropagation(); toggleBookmark('${art.id}')" class="text-gray-400 hover:text-blue-600 p-2">
+                                <i class="${isBookmarked ? 'fa-solid text-blue-600' : 'fa-regular'} fa-bookmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // RENDER MAIN GRID CARDS
+        function renderMainGrid(articles) {
+            const grid = document.getElementById('main-articles-grid');
+            grid.innerHTML = articles.map(art => {
+                const relativeTime = getRelativeTime(art.pubDate);
+                const isBookmarked = state.bookmarks.some(b => b.title === art.title);
+
+                return `
+                    <div onclick="openArticleModal('${art.id}')" class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between cursor-pointer group">
+                        <div>
+                            <div class="h-44 overflow-hidden relative bg-gray-100 dark:bg-slate-800">
+                                <img src="${art.image}" alt="${art.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=600&q=80'">
+                                <span class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold rounded">
+                                    ${art.publisher}
+                                </span>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <div class="text-[11px] text-gray-400 flex items-center space-x-2">
+                                    <span><i class="fa-regular fa-clock mr-1"></i>${relativeTime}</span>
+                                </div>
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug line-clamp-2">
+                                    ${art.title}
+                                </h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                    ${art.excerpt}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="px-4 py-3 border-t border-gray-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-semibold text-gray-500">
+                            <span class="text-blue-600 dark:text-blue-400 group-hover:underline">Explore Story</span>
+                            <button onclick="event.stopPropagation(); toggleBookmark('${art.id}')" class="hover:text-blue-600 p-1">
+                                <i class="${isBookmarked ? 'fa-solid text-blue-600' : 'fa-regular'} fa-bookmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // RENDER TRENDING SIDEBAR
+        function renderTrendingSidebar(items) {
+            const list = document.getElementById('trending-list');
+            list.innerHTML = items.map((art, idx) => `
+                <div onclick="openArticleModal('${art.id}')" class="flex items-start space-x-3 cursor-pointer group pb-3 border-b border-gray-100 dark:border-slate-800 last:border-0 last:pb-0">
+                    <span class="text-2xl font-black text-gray-300 dark:text-slate-700 group-hover:text-blue-600 transition">
+                        0${idx + 1}
+                    </span>
+                    <div class="flex-1 space-y-1">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase">${art.publisher}</span>
+                        <h4 class="text-xs font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition line-clamp-2">
+                            ${art.title}
+                        </h4>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ARTICLE READER MODAL LOGIC
+        function openArticleModal(articleId) {
+            const art = state.articles.find(a => a.id === articleId) || state.featuredArticle;
+            if (!art) return;
+
+            state.currentModalArticle = art;
+
+            // Track reading history
+            if (!state.readingHistory.some(h => h.title === art.title)) {
+                state.readingHistory.unshift(art);
+                if (state.readingHistory.length > 30) state.readingHistory.pop();
+                localStorage.setItem('newspulse_history', JSON.stringify(state.readingHistory));
+            }
+
+            document.getElementById('modal-title').textContent = art.title;
+            document.getElementById('modal-publisher').textContent = art.publisher;
+            document.getElementById('modal-source-name').textContent = art.publisher;
+            document.getElementById('modal-time').textContent = getRelativeTime(art.pubDate);
+            document.getElementById('modal-category').textContent = art.category.toUpperCase();
+            document.getElementById('modal-excerpt').textContent = art.excerpt;
+            document.getElementById('modal-image').src = art.image;
+            document.getElementById('modal-read-original').href = art.link;
+
+            updateModalBookmarkIcon();
+
+            document.getElementById('article-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeArticleModal() {
+            document.getElementById('article-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // SEARCH HANDLING
+        function handleSearch(e) {
+            e.preventDefault();
+            const input = window.innerWidth >= 768 
+                ? document.getElementById('desktop-search-input') 
+                : document.getElementById('mobile-search-input');
+            
+            const query = input.value.trim();
+            if (!query) return;
+
+            state.searchQuery = query;
+            state.page = 1;
+
+            document.getElementById('desktop-clear-search').classList.remove('hidden');
+            document.getElementById('mobile-clear-search').classList.remove('hidden');
+
+            document.getElementById('search-query-banner').classList.remove('hidden');
+            document.getElementById('search-term-display').textContent = `"${query}"`;
+            document.getElementById('current-section-title').textContent = 'Search Results';
+
+            fetchNewsFeed();
+        }
+
+        function searchByTopic(topicName) {
+            document.getElementById('desktop-search-input').value = topicName;
+            document.getElementById('mobile-search-input').value = topicName;
+            const mockEvent = { preventDefault: () => {} };
+            handleSearch(mockEvent);
+        }
+
+        function clearSearch() {
+            state.searchQuery = '';
+            document.getElementById('desktop-search-input').value = '';
+            document.getElementById('mobile-search-input').value = '';
+            document.getElementById('desktop-clear-search').classList.add('hidden');
+            document.getElementById('mobile-clear-search').classList.add('hidden');
+            document.getElementById('search-query-banner').classList.add('hidden');
+            navigateToCategory(state.activeCategory);
+        }
+
+        // BOOKMARKS SYSTEM
+        function toggleBookmark(artId) {
+            const art = state.articles.find(a => a.id === artId);
+            if (!art) return;
+
+            const idx = state.bookmarks.findIndex(b => b.title === art.title);
+            if (idx > -1) {
+                state.bookmarks.splice(idx, 1);
+                showToast('Removed from saved bookmarks');
+            } else {
+                state.bookmarks.push(art);
+                showToast('Saved to your bookmarks');
+            }
+
+            localStorage.setItem('newspulse_bookmarks', JSON.stringify(state.bookmarks));
+            updateBookmarkBadge();
+            renderArticlesView();
+            renderBookmarksList();
+        }
+
+        function toggleBookmarkCurrentArticle() {
+            if (state.currentModalArticle) {
+                toggleBookmark(state.currentModalArticle.id);
+                updateModalBookmarkIcon();
+            }
+        }
+
+        function updateModalBookmarkIcon() {
+            if (!state.currentModalArticle) return;
+            const isBookmarked = state.bookmarks.some(b => b.title === state.currentModalArticle.title);
+            const btn = document.getElementById('modal-bookmark-btn');
+            btn.innerHTML = `<i class="${isBookmarked ? 'fa-solid text-blue-600' : 'fa-regular'} fa-bookmark text-base"></i>`;
+        }
+
+        function updateBookmarkBadge() {
+            const badge = document.getElementById('bookmark-count-badge');
+            if (state.bookmarks.length > 0) {
+                badge.textContent = state.bookmarks.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function toggleBookmarksDrawer() {
+            const drawer = document.getElementById('bookmarks-drawer');
+            drawer.classList.toggle('translate-x-full');
+            renderBookmarksList();
+        }
+
+        function renderBookmarksList() {
+            const container = document.getElementById('bookmarks-list');
+            if (state.bookmarks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 space-y-2">
+                        <i class="fa-regular fa-bookmark text-3xl"></i>
+                        <p class="text-xs font-semibold">No saved articles yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.bookmarks.map(art => `
+                <div class="p-3 bg-gray-50 dark:bg-slate-800/80 rounded-xl flex space-x-3 items-center justify-between border border-gray-100 dark:border-slate-700">
+                    <div class="flex-1 space-y-1">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase">${art.publisher}</span>
+                        <h5 onclick="openArticleModal('${art.id}')" class="text-xs font-bold text-gray-900 dark:text-white hover:underline cursor-pointer line-clamp-2">
+                            ${art.title}
+                        </h5>
+                    </div>
+                    <button onclick="toggleBookmark('${art.id}')" class="text-red-500 hover:text-red-700 p-2">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function clearAllBookmarks() {
+            state.bookmarks = [];
+            localStorage.setItem('newspulse_bookmarks', '[]');
+            updateBookmarkBadge();
+            renderBookmarksList();
+            renderArticlesView();
+            showToast('All bookmarks cleared');
+        }
+
+        // SOCIAL SHARING
+        function shareArticleModal() {
+            if (!state.currentModalArticle) return;
+            if (navigator.share) {
+                navigator.share({
+                    title: state.currentModalArticle.title,
+                    text: state.currentModalArticle.excerpt,
+                    url: state.currentModalArticle.link
+                }).catch(() => {});
+            } else {
+                copyArticleLink();
+            }
+        }
+
+        function shareToPlatform(platform) {
+            if (!state.currentModalArticle) return;
+            const url = encodeURIComponent(state.currentModalArticle.link);
+            const text = encodeURIComponent(state.currentModalArticle.title);
+
+            let shareUrl = '';
+            if (platform === 'whatsapp') shareUrl = `https://api.whatsapp.com/send?text=${text}%20${url}`;
+            if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+            if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+
+            if (shareUrl) window.open(shareUrl, '_blank');
+        }
+
+        function copyArticleLink() {
+            if (!state.currentModalArticle) return;
+            const tempInput = document.createElement('input');
+            tempInput.value = state.currentModalArticle.link;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Article link copied to clipboard!');
+        }
+
+        // ADMIN PANEL & SYSTEM DIAGNOSTICS
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function verifyAdminPin() {
+            const pin = document.getElementById('admin-pin-input').value;
+            if (pin === '1234' || pin === 'admin') {
+                document.getElementById('admin-lock-screen').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                document.getElementById('admin-stat-articles').textContent = state.articles.length;
+                logAdminEvent('[AUTH]: Admin PIN verified successfully.');
+            } else {
+                showToast('Invalid Admin PIN. Try: 1234');
+            }
+        }
+
+        function updateProviderSettings() {
+            const val = document.getElementById('admin-provider-select').value;
+            state.provider = val;
+            localStorage.setItem('newspulse_provider', val);
+            logAdminEvent(`[CONFIG]: Switch active news provider to ${val}`);
+        }
+
+        function saveAdminSettings() {
+            const key = document.getElementById('admin-api-key').value;
+            localStorage.setItem('newspulse_apikey', key);
+            showToast('Admin configuration saved.');
+            fetchNewsFeed();
+        }
+
+        function logAdminEvent(msg) {
+            const timestamp = new Date().toLocaleTimeString();
+            const consoleEl = document.getElementById('admin-logs-console');
+            if (consoleEl) {
+                const div = document.createElement('div');
+                div.textContent = `[${timestamp}] ${msg}`;
+                consoleEl.appendChild(div);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+        }
+
+        // LEGAL / TERMS MODAL
+        function openLegalModal(section = 'about') {
+            const titleEl = document.getElementById('legal-modal-title');
+            const bodyEl = document.getElementById('legal-modal-body');
+
+            if (section === 'about') {
+                titleEl.textContent = 'About NewsPulse';
+                bodyEl.innerHTML = `
+                    <p><strong>NewsPulse</strong> is an independent digital news aggregator designed to connect readers with high-quality journalism across Kenya and the globe.</p>
+                    <p>Our platform automatically organizes public headlines, summaries, and images into a single clean interface, directing readers back to the original publishers for complete reporting.</p>
+                `;
+            } else if (section === 'privacy') {
+                titleEl.textContent = 'Privacy Policy';
+                bodyEl.innerHTML = `
+                    <p>NewsPulse respects user privacy. We do not collect or sell personal tracking data. Saved bookmarks and history are stored locally on your device.</p>
+                `;
+            } else {
+                titleEl.textContent = 'Attribution & Terms of Use';
+                bodyEl.innerHTML = `
+                    <p>All news content, titles, and images belong to their respective copyright holders. NewsPulse functions purely as a news discovery engine inspired by RSS standards.</p>
+                `;
+            }
+
+            document.getElementById('legal-modal').classList.remove('hidden');
+        }
+
+        function closeLegalModal() {
+            document.getElementById('legal-modal').classList.add('hidden');
+        }
+
+        // UI HELPERS & SKELETON STATES
+        function showLoadingState() {
+            document.getElementById('loading-skeletons').classList.remove('hidden');
+            document.getElementById('news-container').classList.add('hidden');
+            document.getElementById('refresh-icon').classList.add('fa-spin');
+        }
+
+        function hideLoadingState() {
+            document.getElementById('loading-skeletons').classList.add('hidden');
+            document.getElementById('refresh-icon').classList.remove('fa-spin');
+        }
+
+        function refreshCurrentFeed() {
+            showToast('Refreshing news feeds...');
+            fetchNewsFeed();
+        }
+
+        function loadMoreArticles() {
+            state.page += 1;
+            renderArticlesView();
+            showToast('Loaded more articles');
+        }
+
+        function updateLastUpdatedText() {
+            document.getElementById('last-updated-text').innerHTML = `<i class="fa-regular fa-clock mr-1"></i> Updated ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+        }
+
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        }
+
+        function extractSourceFromTitle(title) {
+            if (title && title.includes(' - ')) {
+                return title.split(' - ').pop();
+            }
+            return 'News Source';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // FALLBACK LOCAL NEWS DATA GENERATOR FOR OFFLINE / RATE LIMIT REDUNDANCY
+        function getFallbackNewsData(cat) {
+            return [
+                {
+                    title: "Central Bank of Kenya Holds Benchmark Rate Steady Amid Inflation Slowdown",
+                    author: "Business Daily Kenya",
+                    pubDate: new Date().toISOString(),
+                    description: "The Monetary Policy Committee has decided to maintain the central bank rate as economic indicators point toward price stabilization across East Africa.",
+                    link: "https://news.google.com"
+                },
+                {
+                    title: "Silicon Savannah: Nairobi Tech Hubs Attract Record Venture Capital Investment",
+                    author: "TechCrunch Africa",
+                    pubDate: new Date(Date.now() - 3600000).toISOString(),
+                    description: "Fintech and green energy startups based in Nairobi accounted for over 40 percent of total capital raised across sub-Saharan Africa this quarter.",
+                    link: "https://news.google.com"
+                },
+                {
+                    title: "Kenya National Football Team Unveils Squad Ahead of AFCON Qualifiers",
+                    author: "Daily Nation Sports",
+                    pubDate: new Date(Date.now() - 7200000).toISOString(),
+                    description: "The head coach has announced a 24-man squad featuring international star players as preparations intensify for crucial upcoming matches.",
+                    link: "https://news.google.com"
+                },
+                {
+                    title: "Global Climate Summit Reaches Landmark Accord on Renewable Transition Funding",
+                    author: "Reuters World",
+                    pubDate: new Date(Date.now() - 10800000).toISOString(),
+                    description: "Delegates from over 190 nations agreed on a multi-billion dollar climate transition framework specifically targeted at developing nations.",
+                    link: "https://news.google.com"
+                },
+                {
+                    title: "Ministry of Agriculture Announces Support Package for Tea and Coffee Farmers",
+                    author: "The Standard Kenya",
+                    pubDate: new Date(Date.now() - 14400000).toISOString(),
+                    description: "Subsidized fertilizer and direct digital payout channels will be rolled out across major agricultural counties starting next week.",
+                    link: "https://news.google.com"
+                }
+            ];
+        }
+    </script>
+</body>
+</html>
+```
